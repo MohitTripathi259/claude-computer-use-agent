@@ -1,0 +1,68 @@
+version: '3.8'
+
+# Docker Compose configuration for local development and testing
+# Usage: docker-compose up -d
+
+services:
+  # The execution container (the "computer")
+  # This runs the virtual desktop environment with browser and tools
+  computer:
+    build:
+      context: ./container
+      dockerfile: Dockerfile
+    container_name: computer-use-container
+    ports:
+      - "8080:8080"   # Tool API server
+      - "5900:5900"   # VNC server (for viewing)
+    environment:
+      - DISPLAY=:99
+      - ENABLE_VNC=true
+    volumes:
+      # Persist workspace data between restarts
+      - workspace_data:/workspace
+      # Mount screenshots folder to local machine
+      - ./screenshots:/screenshots
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+
+  # The orchestrator API
+  # Manages agent sessions and routes tasks to containers
+  orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile.orchestrator
+    container_name: computer-use-orchestrator
+    ports:
+      - "8000:8000"   # Orchestrator API
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - USE_LOCAL_CONTAINER=true
+      - LOCAL_CONTAINER_URL=http://computer:8080
+      - CLAUDE_MODEL=claude-sonnet-4-20250514
+      - LOG_LEVEL=INFO
+    depends_on:
+      computer:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  workspace_data:
+    driver: local
+
+networks:
+  default:
+    name: computer-use-network
