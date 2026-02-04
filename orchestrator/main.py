@@ -14,6 +14,7 @@ import sys
 import os
 import logging
 import httpx
+from datetime import datetime
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -26,6 +27,7 @@ from orchestrator.schemas import (
 )
 from orchestrator.session_manager import SessionManager
 from orchestrator.ecs_manager import ECSManager
+from orchestrator.s3_storage import upload_task_screenshots, list_session_screenshots
 
 # Import the SDK-based agent
 from agent.computer_use_agent import ComputerUseAgent
@@ -305,6 +307,18 @@ async def run_task(session_id: str, request: RunTaskRequest):
         # Update session stats
         session_manager.increment_task_count(session_id)
 
+        # Upload screenshots to S3
+        container_url = agent_info.get("container_url")
+        screenshot_urls = []
+        if container_url:
+            try:
+                screenshot_urls = await upload_task_screenshots(
+                    container_url, session_id, http_client
+                )
+                logger.info(f"Uploaded {len(screenshot_urls)} screenshots to S3")
+            except Exception as e:
+                logger.error(f"Failed to upload screenshots: {e}")
+
         logger.info(f"Task completed in session {session_id}")
 
         return RunTaskResponse(
@@ -312,7 +326,8 @@ async def run_task(session_id: str, request: RunTaskRequest):
             task=request.task,
             result=result,
             tool_calls=len(agent.conversation_history) // 2,
-            status="completed"
+            status="completed",
+            screenshot_urls=screenshot_urls
         )
 
     except Exception as e:
@@ -408,6 +423,7 @@ async def run_direct_task(request: RunTaskRequest):
     Good for quick testing.
     """
     container_url = os.getenv("LOCAL_CONTAINER_URL", "http://localhost:8080")
+    session_id = f"direct-{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
     logger.info(f"Running direct task: {request.task[:100]}...")
 
@@ -418,13 +434,24 @@ async def run_direct_task(request: RunTaskRequest):
         # Run the task (SDK handles agentic loop internally)
         result = await agent.run(request.task)
 
+        # Upload screenshots to S3
+        screenshot_urls = []
+        try:
+            screenshot_urls = await upload_task_screenshots(
+                container_url, session_id, http_client
+            )
+            logger.info(f"Uploaded {len(screenshot_urls)} screenshots to S3")
+        except Exception as e:
+            logger.error(f"Failed to upload screenshots: {e}")
+
         # Cleanup
         await agent.cleanup()
 
         return {
             "task": request.task,
             "result": result,
-            "status": "completed"
+            "status": "completed",
+            "screenshot_urls": screenshot_urls
         }
 
     except Exception as e:

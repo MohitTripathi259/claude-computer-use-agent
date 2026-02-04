@@ -96,6 +96,10 @@ class RunTaskResponse(BaseModel):
     tool_calls: int = Field(0, description="Number of tool calls made (approximate)")
     status: str = Field(..., description="Task completion status")
     error: Optional[str] = Field(None, description="Error message if failed")
+    screenshot_urls: List[str] = Field(
+        default_factory=list,
+        description="URLs of screenshots uploaded to S3"
+    )
 
     class Config:
         json_schema_extra = {
@@ -104,7 +108,8 @@ class RunTaskResponse(BaseModel):
                 "task": "Navigate to example.com",
                 "result": "Successfully navigated to example.com and captured the page.",
                 "tool_calls": 5,
-                "status": "completed"
+                "status": "completed",
+                "screenshot_urls": ["https://bucket.s3.region.amazonaws.com/screenshots/..."]
             }
         }
 
