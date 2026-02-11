@@ -1,0 +1,360 @@
+{
+  "info": {
+    "name": "Computer Use + S3 Skills - E2E Testing",
+    "description": "Comprehensive end-to-end testing for DynamicAgent with MCP servers and S3 skills",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Health & Status",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8003/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8003",
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "System Status (Full Details)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8003/status",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8003",
+              "path": ["status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Computer Use Tools",
+      "item": [
+        {
+          "name": "Screenshot + Visual Analysis",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Take a screenshot of the current desktop. Analyze what applications are visible, identify any text you can read, describe the color scheme, and tell me if there are any browser windows open. If you see a browser, try to identify what website is being displayed.\",\n  \"max_turns\": 5,\n  \"include_s3_skills\": true,\n  \"temperature\": 1.0\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8003/execute",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8003",
+              "path": ["execute"]
+            }
+          }
+        },
+        {
+          "name": "Browser Navigation + Data Extraction",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Open a browser and navigate to https://news.ycombinator.com. Once loaded, extract the titles of the top 5 posts, their scores, and number of comments. Then navigate to the comments of the highest-scored post and summarize the main discussion points. Finally, take a screenshot of that comments page.\",\n  \"max_turns\": 15,\n  \"include_s3_skills\": true,\n  \"temperature\": 1.0\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8003/execute",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8003",
+              "path": ["execute"]
+            }
+          }
+        },
+        {
+          "name": "Bash Commands + File Analysis",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Execute the following sequence: 1) Use bash to check the current directory and list all Python files. 2) Count how many lines of code are in each .py file using 'wc -l'. 3) Find the largest Python file by line count. 4) Read that file and give me a summary of what it does, including the main classes and functions. 5) Check if there are any TODO or FIXME comments in the codebase.\",\n  \"max_turns\": 10,\n  \"include_s3_skills\": true,\n  \"temperature\": 1.0\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8003/execute",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8003",
+              "path": ["execute"]
+            }
+          }
+        },
+        {
+          "name": "Text Editor Operations",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Using the text editor tool: 1) Create a new Python file called 'test_analysis.py'. 2) Write a function that analyzes log files and counts error occurrences. 3) Add proper docstrings and type hints. 4) Add unit tests for the function. 5) Read the file back and verify all code is syntactically correct.\",\n  \"max_turns\": 12,\n  \"include_s3_skills\": true,\n  \"temperature\": 1.0\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8003/execute",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8003",
+              "path": ["execute"]
+            }
+          }
+        },
+        {
+          "name": "Multi-Tool Workflow (Screenshot→Browser→Bash→Editor)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Complete workflow: 1) Take a screenshot and describe the desktop. 2) Open browser to https://example.com and extract the page title. 3) Use bash to create a report file with timestamp. 4) Use text editor to write a summary of what you found (desktop state + website info) into that report file. 5) Use bash to display the contents of the report file. 6) Take a final screenshot showing the completed work.\",\n  \"max_turns\": 20,\n  \"include_s3_skills\": true,\n  \"temperature\": 1.0\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8003/execute",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8003",
+              "path": ["execute"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Retail Data Tools",
+      "item": [
+        {
+          "name": "Query Sales Data with Aggregations",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Query the retail database for the following analysis: 1) Get total sales by product category for the last 30 days. 2) Calculate the average order value by customer segment. 3) Identify the top 10 products by revenue. 4) Find products with declining sales trends (comparing last 7 days vs previous 7 days). 5) Summarize key insights and recommend which products need attention.\",\n  \"max_turns\": 10,\n  \"include_s3_skills\": true,\n  \"temperature\": 1.0\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8003/execute",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8003",
+              "path": ["execute"]
+            }
+          }
+        },
+        {
+          "name": "Customer Behavior Analysis",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Perform a comprehensive customer analysis: 1) Query customer data to find purchase patterns. 2) Identify customers who haven't purchased in 60+ days (churn risk). 3) Calculate customer lifetime value for top 20% of customers. 4) Find frequently bought together product combinations. 5) Segment customers by purchase frequency and average order value. 6) Provide actionable recommendations for each segment.\",\n  \"max_turns\": 15,\n  \"include_s3_skills\": true,\n  \"temperature\": 1.0\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8003/execute",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8003",
+              "path": ["execute"]
+            }
+          }
+        },
+        {
+          "name": "Inventory + Sales Correlation",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Cross-analyze inventory and sales: 1) Query current inventory levels across all warehouses. 2) Get sales velocity for each product (units sold per day). 3) Calculate days of inventory remaining for each SKU. 4) Identify products at risk of stockout (<7 days inventory). 5) Find overstocked items (>90 days inventory with low sales). 6) Generate a prioritized action plan for inventory optimization.\",\n  \"max_turns\": 12,\n  \"include_s3_skills\": true,\n  \"temperature\": 1.0\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8003/execute",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8003",
+              "path": ["execute"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. S3 Skills Testing",
+      "item": [
+        {
+          "name": "PDF Report Generation (S3 Skill)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Using the pdf_report_generator skill from S3: 1) Query retail sales data for Q4 2025. 2) Analyze the data to extract key metrics (total revenue, growth rate, top categories, regional performance). 3) Use the pdf_report_generator skill to create an executive summary PDF report with the following: title page with Q4 2025 Sales Report, executive summary section with key findings, data visualizations section with charts, detailed metrics table, and recommendations section. 4) Verify the PDF was created and describe its structure.\",\n  \"max_turns\": 15,\n  \"include_s3_skills\": true,\n  \"temperature\": 1.0\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8003/execute",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8003",
+              "path": ["execute"]
+            }
+          }
+        },
+        {
+          "name": "S3 Skill Discovery + Context Understanding",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Demonstrate your knowledge of S3 skills: 1) Tell me what skills are loaded from S3. 2) For each skill, describe what it does, what parameters it accepts, and what output it produces. 3) Explain the difference between S3 skills and MCP tools. 4) Show me an example of how you would use the pdf_report_generator skill with custom branding and data sources. 5) What other types of skills would be useful to add to the S3 bucket?\",\n  \"max_turns\": 8,\n  \"include_s3_skills\": true,\n  \"temperature\": 1.0\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8003/execute",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8003",
+              "path": ["execute"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Legacy Skills",
+      "item": [
+        {
+          "name": "Query Database Skill (DynamoDB)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Using the query_database skill: 1) Query alerts from the scraper_engine DynamoDB table for project 'Maria'. 2) Filter for alerts from the last 7 days. 3) Group alerts by severity level. 4) Count alerts by source/category. 5) Identify any patterns or anomalies in the alert data. 6) Create a summary report with: total alerts, breakdown by severity, top 5 alert sources, and any unusual spikes or trends.\",\n  \"max_turns\": 10,\n  \"include_s3_skills\": true,\n  \"temperature\": 1.0\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8003/execute",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8003",
+              "path": ["execute"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Complex Multi-Tool Workflows",
+      "item": [
+        {
+          "name": "Full Business Intelligence Pipeline",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Complete BI pipeline: 1) Query retail sales data for the last quarter from the database. 2) Use bash to create a data directory and save the raw data to CSV. 3) Analyze the data to find: top products, revenue trends, customer segments, regional performance. 4) Use text editor to create a Python script that generates summary statistics. 5) Execute that script via bash. 6) Use the pdf_report_generator S3 skill to create a professional quarterly business review PDF with executive summary, charts, and recommendations. 7) Take a screenshot showing the completed workflow. 8) Use bash to verify all generated files exist and show their sizes.\",\n  \"max_turns\": 25,\n  \"include_s3_skills\": true,\n  \"temperature\": 1.0\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8003/execute",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8003",
+              "path": ["execute"]
+            }
+          }
+        },
+        {
+          "name": "Research + Analysis + Reporting",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Multi-source research workflow: 1) Open browser and research 'retail analytics trends 2025' on multiple websites. 2) Extract key findings from at least 3 different sources. 3) Query our internal retail database for comparison data. 4) Query DynamoDB alerts for any related system issues. 5) Use text editor to create a structured markdown report comparing external trends with internal data. 6) Use pdf_report_generator to convert the markdown to a professional PDF. 7) Take screenshots at key stages. 8) Use bash to create a summary log file with timestamps of each step completed.\",\n  \"max_turns\": 30,\n  \"include_s3_skills\": true,\n  \"temperature\": 1.0\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8003/execute",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8003",
+              "path": ["execute"]
+            }
+          }
+        },
+        {
+          "name": "Automated Monitoring + Alerting",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"System health monitoring: 1) Take a screenshot to check system status. 2) Use bash to check disk space, memory usage, and running processes. 3) Query retail database for today's transaction volume and compare to 7-day average. 4) Check DynamoDB for any critical alerts in the last hour. 5) Use browser to check external service status pages for any dependencies. 6) Analyze all collected data to determine overall system health. 7) Use text editor to create an incident report if any issues found, or a status report if all healthy. 8) If issues found, use pdf_report_generator to create an incident report PDF with severity analysis and recommended actions.\",\n  \"max_turns\": 20,\n  \"include_s3_skills\": true,\n  \"temperature\": 1.0\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8003/execute",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8003",
+              "path": ["execute"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Stress Testing",
+      "item": [
+        {
+          "name": "Max Turns Test (Long Running)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Comprehensive system audit: Systematically test every available tool and skill. For each tool: 1) Execute a representative task. 2) Verify the output. 3) Log the result. Include: all computer use tools (screenshot, bash, browser, editor), all retail data tools, query_database skill, and pdf_report_generator skill. Create a detailed test report documenting success/failure of each capability.\",\n  \"max_turns\": 50,\n  \"include_s3_skills\": true,\n  \"temperature\": 1.0\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8003/execute",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8003",
+              "path": ["execute"]
+            }
+          }
+        },
+        {
+          "name": "Parallel Operations Test",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Test concurrent operations: 1) Start multiple bash commands in background (system monitoring, log tailing). 2) Open browser and navigate to multiple tabs simultaneously. 3) While those are running, query the database for large datasets. 4) Create multiple files with text editor. 5) Take screenshots periodically to document state. 6) When all operations complete, aggregate results into a single comprehensive report using pdf_report_generator. Test the system's ability to handle overlapping tool invocations.\",\n  \"max_turns\": 35,\n  \"include_s3_skills\": true,\n  \"temperature\": 1.0\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8003/execute",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8003",
+              "path": ["execute"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

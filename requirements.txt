@@ -23,6 +23,15 @@ python-multipart>=0.0.9
 # Environment management
 python-dotenv>=1.0.0
 
+# MCP Client (for dynamic skill/tool discovery)
+# Note: We implement MCP client ourselves, no external SDK needed
+
 # Testing
 pytest>=8.0.0
 pytest-asyncio>=0.24.0
+
+# PDF Generation (for S3 Skills - pdf_report_generator)
+reportlab>=4.0.0
+matplotlib>=3.8.0
+Pillow>=10.0.0
+# xhtml2pdf>=0.2.13  # Optional - requires C compiler, removed for Docker build

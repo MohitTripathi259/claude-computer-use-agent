@@ -24,6 +24,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from orchestrator.schemas import (
     CreateSessionRequest, CreateSessionResponse,
     RunTaskRequest, RunTaskResponse,
+    DynamicTaskRequest, DynamicTaskResponse,
     SessionStatus, SessionInfo,
     HealthResponse, ContainerHealthResponse, ErrorResponse
 )
@@ -599,6 +600,210 @@ async def run_direct_task(request: RunTaskRequest):
             "status": "error",
             "error": str(e)
         }
+
+
+@app.post(
+    "/task/dynamic",
+    response_model=DynamicTaskResponse,
+    tags=["Tasks"]
+)
+async def run_dynamic_task(request: DynamicTaskRequest):
+    """
+    Run a task using Dynamic Agent with MCP servers.
+
+    This endpoint uses the DynamicAgent which:
+    - Loads all MCP servers from .claude/settings.json
+    - Discovers tools from all enabled servers dynamically
+    - Orchestrates tools from multiple MCP servers
+    - Works with ANY MCP server added to settings.json
+
+    Perfect for marketplace platform testing!
+    """
+    print(f"\n{'=' * 70}")
+    print(f"  POST /task/dynamic  — Dynamic Agent with MCP Servers")
+    print(f"{'=' * 70}")
+    print(f"  Task: {request.task[:200]}")
+    print(f"  MCP Servers: {'enabled' if request.enable_mcp_servers else 'disabled'}")
+    print(f"  Max turns: {request.max_turns}")
+    print(f"  Timestamp: {datetime.now().isoformat()}")
+
+    logger.info(f"Running dynamic task: {request.task[:100]}...")
+
+    try:
+        # Import here to avoid circular imports
+        from orchestrator.agent_runner import DynamicAgent
+
+        # Get Anthropic API key from environment
+        anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
+        if not anthropic_api_key:
+            raise ValueError("ANTHROPIC_API_KEY environment variable not set")
+
+        # Create Dynamic Agent (auto-loads MCP servers from settings.json)
+        print(f"\n  [step 1] Creating DynamicAgent...")
+        print(f"  [step 1] Loading .claude/settings.json...")
+
+        settings_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            ".claude/settings.json"
+        )
+
+        agent = DynamicAgent(
+            anthropic_api_key=anthropic_api_key,
+            settings_path=settings_path
+        )
+        print(f"  [step 1] Agent created successfully")
+        print(f"  [step 1] MCP servers loaded: {list(agent.mcp_client.servers.keys())}")
+        print(f"  [step 1] Total tools discovered: {len(agent.tools)}")
+
+        print(f"\n  >>> HANDING OFF TO DYNAMIC AGENT... <<<\n")
+        task_start = datetime.now()
+
+        result = await agent.execute_task(request.task, max_turns=request.max_turns)
+
+        task_elapsed = (datetime.now() - task_start).total_seconds()
+
+        print(f"\n  >>> DYNAMIC AGENT RETURNED <<<")
+        print(f"  Task execution time: {task_elapsed:.1f}s")
+        print(f"  Status: {result.get('status')}")
+        print(f"  Tool calls: {result.get('tool_calls', 0)}")
+        print(f"  Turns used: {result.get('turns', 0)}")
+        print(f"  MCP servers used: {result.get('mcp_servers_used', [])}")
+
+        print(f"\n  DYNAMIC TASK COMPLETED")
+        print(f"{'=' * 70}\n")
+
+        return DynamicTaskResponse(
+            task=request.task,
+            result=result.get("result", ""),
+            status=result.get("status", "unknown"),
+            tool_calls=result.get("tool_calls", 0),
+            turns=result.get("turns", 0),
+            mcp_servers_used=result.get("mcp_servers_used", []),
+            error=result.get("error")
+        )
+
+    except Exception as e:
+        print(f"\n  DYNAMIC TASK FAILED")
+        print(f"  Error: {e}")
+        print(f"{'=' * 70}\n")
+        logger.error(f"Dynamic task failed: {e}", exc_info=True)
+
+        return DynamicTaskResponse(
+            task=request.task,
+            result="",
+            status="error",
+            tool_calls=0,
+            turns=0,
+            mcp_servers_used=[],
+            error=str(e)
+        )
+
+
+@app.post(
+    "/task/with-options",
+    response_model=DynamicTaskResponse,
+    tags=["Tasks"]
+)
+async def run_task_with_options(request: DynamicTaskRequest):
+    """
+    Run a task using ClaudeAgentOptions wrapper.
+
+    This endpoint demonstrates the ClaudeAgentOptions wrapper which provides
+    an API-compatible interface similar to the official claude-agent-sdk.
+
+    Key features:
+    - Uses ClaudeAgentOptions dataclass for configuration
+    - Supports all MCP server configuration options
+    - Provides query() function similar to official SDK
+    - Allows filtering to specific allowed_tools
+    - Compatible migration path to official SDK later
+    """
+    print(f"\n{'=' * 70}")
+    print(f"  POST /task/with-options  — ClaudeAgentOptions Wrapper")
+    print(f"{'=' * 70}")
+    print(f"  Task: {request.task[:200]}")
+    print(f"  MCP Servers: {'enabled' if request.enable_mcp_servers else 'disabled'}")
+    print(f"  Max turns: {request.max_turns}")
+    print(f"  Timestamp: {datetime.now().isoformat()}")
+
+    logger.info(f"Running task with ClaudeAgentOptions: {request.task[:100]}...")
+
+    try:
+        # Import ClaudeAgentOptions and query function
+        from orchestrator.claude_options import ClaudeAgentOptions, query
+
+        # Get Anthropic API key from environment
+        anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
+        if not anthropic_api_key:
+            raise ValueError("ANTHROPIC_API_KEY environment variable not set")
+
+        # Build settings path
+        settings_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            ".claude/settings.json"
+        )
+
+        # Create ClaudeAgentOptions
+        print(f"\n  [step 1] Creating ClaudeAgentOptions...")
+        options = ClaudeAgentOptions(
+            api_key=anthropic_api_key,
+            settings_path=settings_path,
+            enable_mcp_servers=request.enable_mcp_servers,
+            max_turns=request.max_turns,
+            verbose=True,
+            log_tool_calls=True
+        )
+
+        print(f"  [step 1] Options created:")
+        print(f"  [step 1]   - Model: {options.model}")
+        print(f"  [step 1]   - MCP Servers: {len(options.mcp_servers or {})}")
+        print(f"  [step 1]   - Allowed tools: {options.allowed_tools or 'all'}")
+        print(f"  [step 1]   - Permission mode: {options.permission_mode}")
+
+        # Execute using query() function
+        print(f"\n  [step 2] Executing task with query()...")
+        print(f"  >>> HANDING OFF TO CLAUDE AGENT... <<<\n")
+        task_start = datetime.now()
+
+        result = await query(task=request.task, options=options)
+
+        task_elapsed = (datetime.now() - task_start).total_seconds()
+
+        print(f"\n  >>> CLAUDE AGENT RETURNED <<<")
+        print(f"  Task execution time: {task_elapsed:.1f}s")
+        print(f"  Status: {result.get('status')}")
+        print(f"  Tool calls: {result.get('tool_calls', 0)}")
+        print(f"  Turns used: {result.get('turns', 0)}")
+        print(f"  MCP servers used: {result.get('mcp_servers_used', [])}")
+
+        print(f"\n  TASK WITH OPTIONS COMPLETED")
+        print(f"{'=' * 70}\n")
+
+        return DynamicTaskResponse(
+            task=request.task,
+            result=result.get("result", ""),
+            status=result.get("status", "unknown"),
+            tool_calls=result.get("tool_calls", 0),
+            turns=result.get("turns", 0),
+            mcp_servers_used=result.get("mcp_servers_used", []),
+            error=result.get("error")
+        )
+
+    except Exception as e:
+        print(f"\n  TASK WITH OPTIONS FAILED")
+        print(f"  Error: {e}")
+        print(f"{'=' * 70}\n")
+        logger.error(f"Task with options failed: {e}", exc_info=True)
+
+        return DynamicTaskResponse(
+            task=request.task,
+            result="",
+            status="error",
+            tool_calls=0,
+            turns=0,
+            mcp_servers_used=[],
+            error=str(e)
+        )
 
 
 # ===================

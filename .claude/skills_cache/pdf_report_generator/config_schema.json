@@ -1,0 +1,189 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PDF Report Generator Configuration Schema",
+  "description": "Configuration schema for customizing PDF report generation. All fields are optional - skill works with intelligent defaults.",
+  "type": "object",
+
+  "properties": {
+    "input": {
+      "type": "object",
+      "description": "Data source configuration (optional - can pass data directly)",
+      "properties": {
+        "from": {
+          "type": "string",
+          "description": "MCP server endpoint for data",
+          "examples": ["mcp://database/sales-data", "mcp://api/analytics"]
+        },
+        "query": {
+          "type": "string",
+          "description": "Query or filter to apply",
+          "examples": ["SELECT * FROM sales WHERE date > '2026-01-01'"]
+        },
+        "format": {
+          "type": "string",
+          "enum": ["json", "csv", "sql", "api"],
+          "default": "json",
+          "description": "Expected data format from source"
+        }
+      }
+    },
+
+    "output": {
+      "type": "object",
+      "description": "Output destination (optional - defaults to ./output/)",
+      "properties": {
+        "to": {
+          "type": "string",
+          "description": "MCP server endpoint for saving reports",
+          "examples": ["mcp://sharepoint/reports", "mcp://s3/company-reports"]
+        },
+        "format": {
+          "type": "string",
+          "enum": ["pdf", "pptx", "docx", "html", "markdown"],
+          "default": "pdf",
+          "description": "Output format"
+        },
+        "filename_pattern": {
+          "type": "string",
+          "default": "report_{date}_{time}",
+          "description": "Filename pattern with variables: {date}, {time}, {title}",
+          "examples": ["sales_report_{date}", "Q4_{title}"]
+        }
+      }
+    },
+
+    "template": {
+      "type": "string",
+      "enum": ["executive_summary", "financial_report", "project_status", "data_analysis", "generic"],
+      "default": "generic",
+      "description": "Built-in template to use"
+    },
+
+    "branding": {
+      "type": "object",
+      "description": "Company branding customization",
+      "properties": {
+        "logo": {
+          "type": "string",
+          "description": "Path or MCP reference to logo image",
+          "examples": ["mcp://assets/logo.png", "./assets/logo.png"]
+        },
+        "colors": {
+          "type": "object",
+          "properties": {
+            "primary": {
+              "type": "string",
+              "pattern": "^#[0-9A-Fa-f]{6}$",
+              "description": "Primary brand color (hex)",
+              "examples": ["#1E3A8A"]
+            },
+            "secondary": {
+              "type": "string",
+              "pattern": "^#[0-9A-Fa-f]{6}$",
+              "description": "Secondary brand color (hex)"
+            },
+            "accent": {
+              "type": "string",
+              "pattern": "^#[0-9A-Fa-f]{6}$",
+              "description": "Accent color for highlights"
+            }
+          }
+        },
+        "font": {
+          "type": "string",
+          "default": "Arial",
+          "enum": ["Arial", "Helvetica", "Times New Roman", "Calibri", "Georgia"],
+          "description": "Primary font family"
+        }
+      }
+    },
+
+    "include_ai_insights": {
+      "type": "boolean",
+      "default": true,
+      "description": "Use AI to generate insights and narrative from data"
+    },
+
+    "auto_charts": {
+      "type": "boolean",
+      "default": true,
+      "description": "Automatically create charts from numerical data"
+    },
+
+    "page_size": {
+      "type": "string",
+      "enum": ["A4", "Letter", "Legal", "A3"],
+      "default": "A4",
+      "description": "Page size for PDF output"
+    },
+
+    "orientation": {
+      "type": "string",
+      "enum": ["portrait", "landscape"],
+      "default": "portrait",
+      "description": "Page orientation"
+    },
+
+    "schedule": {
+      "type": "string",
+      "enum": ["daily", "weekly", "monthly", "quarterly"],
+      "description": "Automated generation schedule (optional)"
+    },
+
+    "notify": {
+      "type": "string",
+      "description": "Email or MCP endpoint to notify when report is ready",
+      "examples": ["mcp://email/team@company.com", "team@company.com"]
+    },
+
+    "language": {
+      "type": "string",
+      "default": "en",
+      "description": "Report language for AI-generated content",
+      "examples": ["en", "es", "fr", "de"]
+    },
+
+    "sections": {
+      "type": "array",
+      "description": "Custom section definitions (overrides template)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {"type": "string"},
+          "content_type": {"type": "string", "enum": ["text", "table", "chart", "kpi"]},
+          "data_source": {"type": "string"}
+        }
+      }
+    }
+  },
+
+  "examples": [
+    {
+      "comment": "Minimal config - just data source",
+      "input": {
+        "from": "mcp://database/sales"
+      }
+    },
+    {
+      "comment": "Full customization",
+      "input": {
+        "from": "mcp://salesforce/monthly-data"
+      },
+      "output": {
+        "to": "mcp://sharepoint/reports",
+        "format": "pdf"
+      },
+      "template": "executive_summary",
+      "branding": {
+        "logo": "mcp://assets/logo.png",
+        "colors": {
+          "primary": "#1E3A8A",
+          "secondary": "#3B82F6"
+        }
+      },
+      "include_ai_insights": true,
+      "schedule": "monthly",
+      "notify": "mcp://email/executives@company.com"
+    }
+  ]
+}

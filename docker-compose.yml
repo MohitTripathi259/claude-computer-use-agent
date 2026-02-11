@@ -1,66 +1,72 @@
-# Docker Compose configuration for local development and testing
-# Usage: docker-compose up -d
+# Docker Compose configuration for Dynamic Agent Marketplace Platform
+# Usage: docker-compose up --build
+
+version: '3.8'
 
 services:
-  # The execution container (the "computer")
-  # This runs the virtual desktop environment with browser and tools
-  computer:
+  # Computer Use Container (provides screenshot, mouse, keyboard API)
+  computer-use:
     build:
-      context: ./container
-      dockerfile: Dockerfile
-    container_name: computer-use-container
+      context: .
+      dockerfile: Dockerfile.computer-use
+    container_name: computer-use
     ports:
-      - "8080:8080"   # Tool API server
-      - "5900:5900"   # VNC server (for viewing)
+      - "8080:8080"  # API endpoint
+      - "5900:5900"  # VNC access (optional, for debugging)
     environment:
       - DISPLAY=:99
-      - ENABLE_VNC=true
-    volumes:
-      # Persist workspace data between restarts
-      - workspace_data:/workspace
-      # Mount screenshots folder to local machine
-      - ./screenshots:/screenshots
+      - DISPLAY_WIDTH=1920
+      - DISPLAY_HEIGHT=1080
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 10s
+      interval: 30s
       timeout: 5s
-      retries: 5
-      start_period: 30s
+      retries: 3
+      start_period: 60s
+    networks:
+      - agent-network
     restart: unless-stopped
-    # Resource limits
     deploy:
       resources:
         limits:
-          cpus: '2'
-          memory: 4G
-        reservations:
           cpus: '1'
           memory: 2G
 
-  # The orchestrator API
-  # Manages agent sessions and routes tasks to containers
-  orchestrator:
+  # API Container (Dynamic Agent with MCP, S3 Skills, Native Tools)
+  api:
     build:
       context: .
-      dockerfile: Dockerfile.orchestrator
-    container_name: computer-use-orchestrator
+      dockerfile: Dockerfile.api
+    container_name: dynamic-agent-api
     ports:
-      - "8000:8000"   # Orchestrator API
+      - "8003:8003"
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - USE_LOCAL_CONTAINER=true
-      - LOCAL_CONTAINER_URL=http://computer:8080
-      - CLAUDE_MODEL=claude-sonnet-4-20250514
-      - LOG_LEVEL=DEBUG
+      - COMPUTER_USE_CONTAINER_URL=http://computer-use:8080
+      - AWS_REGION=us-west-2
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_BUCKET=cerebricks-studio-agent-skills
+    volumes:
+      - ./.claude:/app/.claude:ro
     depends_on:
-      computer:
+      computer-use:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    networks:
+      - agent-network
     restart: unless-stopped
-
-volumes:
-  workspace_data:
-    driver: local
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
 
 networks:
-  default:
-    name: computer-use-network
+  agent-network:
+    driver: bridge

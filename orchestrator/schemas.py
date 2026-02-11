@@ -76,6 +76,59 @@ class RunTaskRequest(BaseModel):
         }
 
 
+class DynamicTaskRequest(BaseModel):
+    """Request to run a task using Dynamic Agent with MCP servers."""
+    task: str = Field(
+        ...,
+        description="Task description for the agent",
+        min_length=1,
+        max_length=10000
+    )
+    enable_mcp_servers: Optional[bool] = Field(
+        True,
+        description="Whether to load and use MCP servers from settings.json"
+    )
+    max_turns: Optional[int] = Field(
+        25,
+        description="Maximum conversation turns"
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "task": "Query retail products and create a report",
+                "enable_mcp_servers": True,
+                "max_turns": 25
+            }
+        }
+
+
+class DynamicTaskResponse(BaseModel):
+    """Response from Dynamic Agent task execution."""
+    task: str = Field(..., description="Original task description")
+    result: str = Field(..., description="Final result from the agent")
+    status: str = Field(..., description="Task completion status")
+    tool_calls: int = Field(0, description="Number of tool calls made")
+    turns: int = Field(0, description="Number of conversation turns used")
+    mcp_servers_used: List[str] = Field(
+        default_factory=list,
+        description="List of MCP servers that were used"
+    )
+    error: Optional[str] = Field(None, description="Error message if failed")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "task": "Query retail products",
+                "result": "Found 150 products in the snacks category...",
+                "status": "completed",
+                "tool_calls": 5,
+                "turns": 3,
+                "mcp_servers_used": ["computer-use", "retail-data"]
+            }
+        }
+
+
 class TaskResult(BaseModel):
     """Result from a completed task."""
     output: str = Field(..., description="Final agent output")
